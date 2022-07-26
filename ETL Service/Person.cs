@@ -9,15 +9,19 @@ namespace ETL_Service
         private long _accountNumber;
         private DateTime _date;
         private decimal _payment;
+        private string _city;
+        private string _service;
 
 
-        public Person(string firstName, string lastName, long accountNumber, DateTime date, decimal payment)
+        public Person(string firstName, string lastName, long accountNumber, DateTime date, decimal payment, string city, string service)
         {
             _firstName = firstName;
             _lastName = lastName;
             _accountNumber = accountNumber;
             _date = date;
             _payment = payment;
+            _city = city;
+            _service= service;
         }
         
         // public string FirstName { get; set; }
@@ -50,6 +54,16 @@ namespace ETL_Service
         {
             get { return _payment; }
             set { _payment = value; }
+        }
+        public string City
+        {
+            get { return _city; }
+            set { _city = value; }
+        }
+        public string Service
+        {
+            get { return _service; }
+            set { _service = value; }
         }
     }
 }

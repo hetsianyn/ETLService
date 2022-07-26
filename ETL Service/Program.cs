@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
@@ -27,39 +28,46 @@ namespace ETL_Service
         
         public static void Main(string[] args)
         {
-            string filePath = ConfigurationManager.AppSettings["path"] + "\\sample.csv";
-            Console.WriteLine(filePath);
-            
-            ReadCsv(filePath);
-            
-            foreach (var person in personList)
+            string path = ConfigurationManager.AppSettings["path"];
+            List<string> files = new List<string>();
+            files.AddRange(System.IO.Directory.GetFiles(path, "*.txt"));
+            files.AddRange(System.IO.Directory.GetFiles(path, "*.csv"));
+            foreach (var item in files)
             {
-                Console.WriteLine("Person: {0},{1},{2},{3},{4}", person.FirstName, person.LastName, person.Date, person.AccountNumber, person.Payment);
+                Console.WriteLine(item);
             }
             
-            foreach (var city in cityList)
-            {
-                Console.WriteLine("City: {0},{1}", city.Name, city.Total);
-            }
+            ReadCsv(files);
             
-            foreach (var service in serviceList)
-            {
-                Console.WriteLine("Service: {0},{1},{2}", service.Name, service.City, service.Payment);
-            }
-
-            ComputeServiceTotal(serviceList);
+            // foreach (var person in personList)
+            // {
+            //     Console.WriteLine("Person: {0},{1},{2},{3},{4},{5},{6}", person.FirstName, person.LastName, person.Date, person.AccountNumber, person.Payment,
+            //         person.City, person.Service);
+            // }
+            //
+            // foreach (var city in cityList)
+            // {
+            //     Console.WriteLine("City: {0},{1}", city.Name, city.Total);
+            // }
+            //
+            // foreach (var service in serviceList)
+            // {
+            //     Console.WriteLine("Service: {0},{1},{2}", service.Name, service.City, service.Payment);
+            // }
+            //
+            // ComputeServiceTotal(serviceList);
+            //
+            // for (int i = 0; i < serviceTotal.Count; i++)
+            // {
+            //     Console.WriteLine("Key: {0}, Value: {1}", 
+            //         serviceTotal.ElementAt(i).Key, 
+            //         serviceTotal.ElementAt(i).Value);
+            // }
+            //
             
-            for (int i = 0; i < serviceTotal.Count; i++)
-            {
-                Console.WriteLine("Key: {0}, Value: {1}", 
-                    serviceTotal.ElementAt(i).Key, 
-                    serviceTotal.ElementAt(i).Value);
-            }
             
             
             
-            
-
             services = serviceList.Select(x => x.Name).Distinct().ToList();
             foreach (var item in services)
             {
@@ -71,17 +79,21 @@ namespace ETL_Service
             {
                 Console.WriteLine(item);
             }
-
+            
             foreach (var city in cities)
             {
-                foreach (var service in services)
+                var xxx = personList.Where(x => x.City == city).Select(x => x.Service).Distinct().ToList();
+                foreach (var service in xxx)
                 {
-                    Console.WriteLine(serviceList.Where(x => x.City == city && x.Name == service).Sum(x => x.Payment)); //Total in every service in every city
+                    //Console.WriteLine(serviceList.Where(x => x.City == city && x.Name == service).Sum(x => x.Payment)); //Total in every service in every city
+                   
+                    Console.WriteLine(city + " " + service);
+            
                 }
                 
-                Console.WriteLine("Total: " + serviceList.Where(x => x.City == city).Sum(x => x.Payment)); // Total by city
+                //Console.WriteLine("Total: " + serviceList.Where(x => x.City == city).Sum(x => x.Payment)); // Total by city
             }
-
+            
             ToJson();
 
         }
@@ -102,43 +114,53 @@ namespace ETL_Service
             
             return serviceTotal;
         }
+        
+        
 
-
-        public static void ReadCsv(string filePath)
+        public static void ReadCsv(List<string> files)
         {
             
             try
             {
                 // Create an instance of StreamReader to read from a file.
                 // The using statement also closes the StreamReader.
-                using (StreamReader sr = new StreamReader(filePath))
+                foreach (var file in files)
                 {
-                    string line;
-                    // Read and display lines from the file until the end of
-                    // the file is reached.
 
-                    //Skip header of csv
-                    for(var i = 0; i < 1; i++) {
-                        sr.ReadLine();
-                    }
-                    
-                    while ((line = sr.ReadLine()) != null)
+                    using (StreamReader sr = new StreamReader(file))
                     {
-                        char[] charsToSplit = {' '};
-                        char[] charsToTrim = {'"', ','};
-                        
-                        //Console.WriteLine(line);
-                        
-                        var transactionProperties = line.Split(charsToSplit, StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < transactionProperties.Length; i++)
+                        string line;
+                        // Read and display lines from the file until the end of
+                        // the file is reached.
+
+                        if (file.Contains(".csv"))
                         {
-                            transactionProperties[i] = transactionProperties[i].Trim(charsToTrim);
+                            //Skip header of csv
+                            for (var i = 0; i < 1; i++)
+                            {
+                                sr.ReadLine();
+                            }
                         }
-                        List<string> transactionProps = new List<string>(transactionProperties);
-                        
-                        ExtractPerson(transactionProps);
-                        ExtractCity(transactionProps);
-                        ExtractService(transactionProps);
+
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            char[] charsToSplit = {' '};
+                            char[] charsToTrim = {'"', ','};
+
+                            //Console.WriteLine(line);
+
+                            var transactionProperties = line.Split(charsToSplit, StringSplitOptions.RemoveEmptyEntries);
+                            for (int i = 0; i < transactionProperties.Length; i++)
+                            {
+                                transactionProperties[i] = transactionProperties[i].Trim(charsToTrim);
+                            }
+
+                            List<string> transactionProps = new List<string>(transactionProperties);
+
+                            ExtractPerson(transactionProps);
+                            ExtractCity(transactionProps);
+                            ExtractService(transactionProps);
+                        }
                     }
                 }
             }
@@ -157,7 +179,9 @@ namespace ETL_Service
                 transactionProps[1],
                 long.Parse(transactionProps[8]), 
                 DateTime.ParseExact(transactionProps[7], "yyyy-dd-MM", null),
-                Decimal.Parse(transactionProps[6], CultureInfo.InvariantCulture)));
+                Decimal.Parse(transactionProps[6], CultureInfo.InvariantCulture),
+                transactionProps[2],
+                transactionProps[9]));
 
             return true;
         }
@@ -178,85 +202,47 @@ namespace ETL_Service
 
             return true;
         }
-
-
-
-        // public static void GetConfigurationValue()
-        // {
-        //     var title = ConfigurationManager.AppSettings["title"];
-        //     var path = ConfigurationManager.AppSettings["path"];
-        //     Console.WriteLine("'{0}' is running in '{1}' file.", title, path);
-        // }
-
-
+        
+        
         public static void ToJson()
         {
-            string path = @"file.json";
-            string json = "[\n";
+            string path = @"json.json";
+            string json = "[";
             
             foreach (var city in cities)
             {
-                json = json + "{\n";
-                json = json + "\"city\":" + city + "\",\n";
-                json = json + "\"services\": [{";
+                json += "{\n";
+                json += "\t\"city\":\"" + city + "\",\n";
+                json += "\t\"services\": [";
                 
-                foreach (var service in services )
+                foreach (var service in personList.Where(x => x.City == city).Select(x => x.Service).Distinct().ToList())
                 { 
-                    json = json + "\"name\": \"" + service + "\",\n";;
+                    json += "\n\t\t{\"name\": \"" + service + "\",\n";
+                    json += "\t\t\"payers\": [\n";
+                    
+                    var payers = personList.Where(x => x.City == city && x.Service == service).ToList();
+                    foreach (var payer in payers)
+                    {
+                        json += "\t\t\t{\"name\": \"" + payer.FirstName + " " + payer.LastName + "\",\n";
+                        json += "\t\t\t\"payment\": " + payer.Payment + ",\n";
+                        json += "\t\t\t\"date\":  \"" + payer.Date + "\",\n";
+                        json += "\t\t\t\"account_number\": " + payer.AccountNumber + "},\n";
+                    }
+                    json = json.Remove(json.Length - 2) + "],";
+                    var serviceTotal = serviceList.Where(x => x.City == city && x.Name == service).Sum(x => x.Payment);
+                    json +="\n\t\t\"total\": " + serviceTotal + "},";
+                    
                 }
                 
-                json = json.Remove(json.Length - 1);
-                json = json + "}\n,";
+                json = json.Remove(json.Length - 1) + "],";
+                var cityTotal = serviceList.Where(x => x.City == city).Sum(x => x.Payment);
+                json += "\n\t\"total\": " + cityTotal + "},\n";
             }
             
-            json = json.Remove(json.Length - 1);
-            json = json + "]";
+            json = json.Remove(json.Length - 2);
+            json += "]";
             File.WriteAllText(path, json);
         }
-
-        // public static void FileToJson(string path)
-        // {
-        //     int counter = 1;
-        //     string[] strheader = new string[100];
-        //     string json = "[\n";
-        //     
-        //     foreach (string line in File.ReadLines(path))
-        //     {
-        //         if (counter == 1)
-        //         {
-        //             strheader = line.Split(',');
-        //         }
-        //         else
-        //         {
-        //             json = json + "{";
-        //             string[] values = line.Split(',');
-        //             int i = 0;
-        //             foreach (string value in values)
-        //             {
-        //                 json = json + "\"" + strheader[i] + "\":\"" + value + "\",";
-        //                 i = i + 1;
-        //             }
-        //             json = json.Remove(json.Length - 1);
-        //             json = json + "}\n,";
-        //         }
-        //
-        //         counter++;
-        //
-        //     }
-        //     json = json.Remove(json.Length - 1);
-        //     json = json + "]";
-        //     File.WriteAllText("filejson.json", json);
-        //
-        //
-        // }
-        //
-        // public static void WriteToJson()
-        // {
-        //     string json = "[\n";
-        //
-        // }
-        
-        
     }
 
     
