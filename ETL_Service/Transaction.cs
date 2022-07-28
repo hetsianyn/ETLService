@@ -2,7 +2,7 @@
 
 namespace ETL_Service
 {
-    public class Person
+    public class Transaction
     {
         private string _firstName;
         private string _lastName;
@@ -13,7 +13,7 @@ namespace ETL_Service
         private string _service;
 
 
-        public Person(string firstName, string lastName, long accountNumber, DateTime date, decimal payment, string city, string service)
+        public Transaction(string firstName, string lastName, long accountNumber, DateTime date, decimal payment, string city, string service)
         {
             _firstName = firstName;
             _lastName = lastName;

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETL Service", "ETL Service\ETL Service.csproj", "{5C14D563-78EB-4BB3-9948-E6812CFC63C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETL_Service", "ETL_Service\ETL_Service.csproj", "{5C14D563-78EB-4BB3-9948-E6812CFC63C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

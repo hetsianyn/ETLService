@@ -3,12 +3,10 @@
     public class City
     {
         private string _name;
-        private decimal _total;
 
-        public City(string name, decimal total)
+        public City(string name)
         {
             _name = name;
-            _total = total;
         }
         
         // public string Name { get; set; }
@@ -18,11 +16,6 @@
         {
             get { return _name; }
             set { _name = value; }
-        }
-        public decimal Total
-        {
-            get { return _total; }
-            set { _total = value; }
         }
     }
 }

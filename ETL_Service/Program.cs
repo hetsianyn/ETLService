@@ -9,16 +9,15 @@ namespace ETL_Service
 {
     internal class Program
     {
-        static List<Person> personList = new List<Person>();
+        static List<Transaction> personList = new List<Transaction>();
         static List<City> cityList = new List<City>();
         static List<Service> serviceList = new List<Service>();
-        private static List<string> services = new List<string>();
         private static List<string> cities = new List<string>();
         private static int errorCount = 0;
         private static List<string> invalidFiles = new List<string>();
         static int linesCount = 0;
-        // static IDictionary<string, decimal> serviceTotal = new Dictionary<string, decimal>();
         
+
         public static void Main(string[] args)
         {
             Console.WriteLine("Input \"start\" command to start ETL_Service:");
@@ -28,7 +27,7 @@ namespace ETL_Service
                 Console.WriteLine("Unrecognized command\n");
                 Environment.Exit(0);
             }
-            Console.WriteLine("ETL Service started execution.");
+            Console.WriteLine("ETL_Service started execution.");
             
             string input = ConfigurationManager.AppSettings["inputPath"];
             string output = ConfigurationManager.AppSettings["outputPath"];
@@ -48,33 +47,8 @@ namespace ETL_Service
                     continue;
                 }
                 
-                int linesCount = ReadCsv(file);
-
-                services = serviceList.Select(x => x.Name).Distinct().ToList();
-                // foreach (var item in services)
-                // {
-                //     Console.WriteLine(item);
-                // }
-
+                linesCount = ReadFile(file);
                 cities = cityList.Select(x => x.Name).Distinct().ToList();
-                // foreach (var item in cities)
-                // {
-                //     Console.WriteLine(item);
-                // }
-
-                // foreach (var city in cities)
-                // {
-                //     var xxx = personList.Where(x => x.City == city).Select(x => x.Service).Distinct().ToList();
-                //     foreach (var service in xxx)
-                //     {
-                //         //Console.WriteLine(serviceList.Where(x => x.City == city && x.Name == service).Sum(x => x.Payment)); //Total in every service in every city
-                //
-                //         Console.WriteLine(city + " " + service);
-                //
-                //     }
-                //
-                //     //Console.WriteLine("Total: " + serviceList.Where(x => x.City == city).Sum(x => x.Payment)); // Total by city
-                // }
                 
                 string outputDir = output + "\\" + DateTime.Now.ToString("dd-MM-yyyy", DateTimeFormatInfo.InvariantInfo);
                 if (!Directory.Exists(outputDir))
@@ -88,30 +62,12 @@ namespace ETL_Service
                 CreateLogFile(outputDir, fileNum-1, linesCount, errorCount, invalidFiles);
             }
 
-            Console.WriteLine("ETL Service finished execution.");
+            Console.WriteLine("ETL_Service finished execution.");
             Console.ReadLine();
         }
-
-        // public static IDictionary<string, decimal> ComputeServiceTotal(List<Service> servicesList)
-        // {
-        //     foreach (var service in serviceList)
-        //     {
-        //         if (serviceTotal.ContainsKey(service.City + service.Name))
-        //         {
-        //             serviceTotal[service.City + service.Name] += service.Payment;
-        //         }
-        //         else
-        //         { 
-        //             serviceTotal.Add(service.City + service.Name, service.Payment);  
-        //         }
-        //     }
-        //     
-        //     return serviceTotal;
-        // }
-        //
         
 
-        public static int ReadCsv(string file)
+        public static int ReadFile(string file)
         {
 
             try
@@ -161,7 +117,8 @@ namespace ETL_Service
             catch (Exception e)
             {
                 // Let the user know what went wrong.
-                Console.WriteLine("The file " + file + " \ncould not be read or some rows are invalid: " + e.Message);
+                Console.WriteLine("The file " + file + " Line " + linesCount +
+                                  " \ncould not be read or some rows are invalid: " + e.Message);
                 errorCount++;
                 invalidFiles.Add(file);
             }
@@ -169,26 +126,11 @@ namespace ETL_Service
             return linesCount;
         }
 
-        public static void CreateLogFile(string outputDir, int fileNum, int linesCount, int errorCount, List<string> invalidFiles)
-        {
-            
-            string log = "parsed_files: " + fileNum + "\n";
-            log += "parsed_lines: " + linesCount + "\n";
-            log += "found_errors: " + errorCount + "\n";
-            log += "invalid_files: [";
-            foreach (var file in invalidFiles)
-            {
-                log += file + ", "; 
-            }
-            log = log.Remove(log.Length - 2);
-            log += "]";
-            
-            File.WriteAllText(outputDir + "\\meta.log", log);
-        }
+        
 
         public static bool ExtractPerson(List<string> transactionProps)
         {
-            personList.Add(new Person(transactionProps[0],
+            personList.Add(new Transaction(transactionProps[0],
                 transactionProps[1],
                 long.Parse(transactionProps[8]), 
                 DateTime.ParseExact(transactionProps[7], "yyyy-dd-MM", null),
@@ -201,8 +143,7 @@ namespace ETL_Service
         
         public static bool ExtractCity(List<string> transactionProps)
         {
-            cityList.Add(new City(transactionProps[2],
-                Decimal.Parse(transactionProps[6], CultureInfo.InvariantCulture)));
+            cityList.Add(new City(transactionProps[2]));
 
             return true;
         }
@@ -255,6 +196,23 @@ namespace ETL_Service
             json = json.Remove(json.Length - 2);
             json += "]";
             File.WriteAllText(path, json);
+        }
+        
+        public static void CreateLogFile(string outputDir, int fileNum, int linesCount, int errorCount, List<string> invalidFiles)
+        {
+            
+            string log = "parsed_files: " + fileNum + "\n";
+            log += "parsed_lines: " + linesCount + "\n";
+            log += "found_errors: " + errorCount + "\n";
+            log += "invalid_files: [";
+            foreach (var file in invalidFiles)
+            {
+                log += file + ",\n"; 
+            }
+            log = log.Remove(log.Length - 2);
+            log += "]";
+            
+            File.WriteAllText(outputDir + "\\meta.log", log);
         }
     }
 
